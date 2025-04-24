@@ -8,7 +8,9 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "python-telegram-bot (>=22.0,<23.0)"
+    "python-telegram-bot (>=22.0,<23.0)",
+    "aiohttp",
+    "beautifulsoup4"
 ]
 
 
