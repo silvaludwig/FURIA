@@ -10,7 +10,9 @@ requires-python = ">=3.13"
 dependencies = [
     "python-telegram-bot (>=22.0,<23.0)",
     "aiohttp",
-    "beautifulsoup4"
+    "beautifulsoup4",
+    "requests (>=2.32.3,<3.0.0)",
+    "selenium"
 ]
 
 
