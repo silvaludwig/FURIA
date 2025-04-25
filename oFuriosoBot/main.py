@@ -142,9 +142,41 @@ async def elenco(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def noticias(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Aqui vai o código que busca as últmas notícias do time..."
-    )
+    await update.message.reply_text("Acessando portal de notícias...")
+    servico = ChromeService(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico)
+    navegador.get("https://draft5.gg/equipe/330-FURIA")
+    sleep(5)
+    navegador.find_element(
+        By.XPATH, '//*[@id="AppContainer"]/div/div/div/div[2]/div[3]/a'
+    ).click()
+    sleep(5)
+
+    headline = navegador.find_element(
+        By.XPATH, '//*[@id="AppContainer"]/div[2]/div/div[1]/div[2]/h1'
+    ).get_attribute("innerText")
+    resumo1 = navegador.find_element(
+        By.XPATH, '//*[@id="AppContainer"]/div[2]/div/div[1]/div[4]/div/div[1]/div'
+    ).get_attribute("innerText")
+    link1 = navegador.find_element(By.TAG_NAME, "a").get_attribute("href")
+    # data_noticia2 = navegador.find_element(
+    #     By.XPATH, '//*[@id="newsBox"]/a[2]/span'
+    # ).get_attribute("innerText")
+    # noticia2 = navegador.find_element(
+    #     By.XPATH, '//*[@id="newsBox"]/a[2]/text()'
+    # ).get_attribute()
+    # data_noticia3 = navegador.find_element(
+    #     By.XPATH, '//*[@id="newsBox"]/a[3]/span'
+    # ).get_attribute("innerText")
+    # noticia3 = navegador.find_element(
+    #     By.XPATH, '//*[@id="newsBox"]/a[3]/text()'
+    # ).get_attribute()
+
+    await update.message.reply_text(f"{headline}  |  {resumo1}\n{link1}")
+    # await update.message.reply_text(f"{data_noticia2}  |  {noticia2}")
+    # await update.message.reply_text(f"{data_noticia3}  |  {noticia3}")
+
+    navegador.quit()
 
 
 # Configuração do bot
