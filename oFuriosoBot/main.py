@@ -7,8 +7,6 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeService
@@ -17,6 +15,7 @@ from time import sleep
 import os
 
 
+# ---- CONFIGURAÇÃO ----
 def carregar_config():
     try:
         with open("config.txt", "r") as f:
@@ -28,63 +27,39 @@ def carregar_config():
         return None
 
 
-TOKEN = carregar_config() or os.getenv(
-    "TELEGRAM_TOKEN"
-)  # Fallback para variável de ambiente
-
+TOKEN = carregar_config() or os.getenv("TELEGRAM_TOKEN")
 if not TOKEN:
-    raise ValueError(
-        "Token não encontrado. Crie um arquivo config.txt com TOKEN=seu_token"
+    raise ValueError("Token não encontrado. Crie config.txt com TOKEN=seu_token")
+
+
+# ---- MENU ----
+def menu_principal():
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("Próximos Jogos", callback_data="proximos_jogos")],
+            [InlineKeyboardButton("Últimos Jogos", callback_data="ultimos_jogos")],
+            [InlineKeyboardButton("Elenco", callback_data="elenco")],
+            [InlineKeyboardButton("Notícias", callback_data="noticias")],
+        ]
     )
 
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    texto = update.message.text.lower()
-
-    if any(palavra in texto for palavra in ["próximo", "jogo", "partida"]):
-        await proximos_jogos(update, context)
-    elif any(palavra in texto for palavra in ["último", "resultado"]):
-        await ultimos_jogos(update, context)
-    elif any(palavra in texto for palavra in ["elenco", "jogador", "time"]):
-        await elenco(update, context)
-    elif any(palavra in texto for palavra in ["notícia", "novidade"]):
-        await noticias(update, context)
-    else:
-        await update.message.reply_text(
-            "🤔 Não entendi. Você pode perguntar sobre:\n"
-            "- Próximos jogos\n- Últimos resultados\n- Elenco\n- Notícias\n"
-            "Ou use o menu abaixo:",
-            reply_markup=menu_principal(),
-        )
-
-
-# servico = ChromeService(ChromeDriverManager().install())
-# navegador = webdriver.Chrome(service=servico)
-
-# TOKEN = "7910113942:AAE09XPX5JHgaFFMGqhKTAYjYa68Wh9jfcE"
-
-
-# COMANDOS FURIOSOS
-def menu_principal():
-    teclado = [
-        [InlineKeyboardButton("Próximos Jogos", callback_data="proximos_jogos")],
-        [InlineKeyboardButton("Últimos Jogos", callback_data="ultimos_jogos")],
-        [InlineKeyboardButton("Elenco", callback_data="elenco")],
-        [InlineKeyboardButton("Notícias", callback_data="noticias")],
-    ]
-    return InlineKeyboardMarkup(teclado)
-
-
+# ---- HANDLERS ----
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "E aí, suave? Sou o FURIOSO, bot da Fúria. \n" "O que manda pra hj?",
-        reply_markup=menu_principal(),
+    await send_response(
+        update,
+        "🟡⚫ E aí, Furioso! Pode me perguntar:\n"
+        "- Quando é o próximo jogo?\n"
+        "- Quais os últimos resultados?\n"
+        "- Quem está no elenco?\n"
+        "- Últimas notícias!",
+        menu_principal(),
     )
 
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()  # Remove o "loading" do botão
+    await query.answer()
 
     if query.data == "proximos_jogos":
         await proximos_jogos(update, context)
@@ -96,9 +71,46 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await noticias(update, context)
 
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    texto = update.message.text.lower()
+
+    if any(p in texto for p in ["pr[óo]ximo", "jogo", "partida"]):
+        await proximos_jogos(update, context)
+    elif any(p in texto for p in ["[uú]ltimo", "resultado", "game", "jogos"]):
+        await ultimos_jogos(update, context)
+    elif any(p in texto for p in ["elenco", "jogador", "time"]):
+        await elenco(update, context)
+    elif any(p in texto for p in ["notícia", "novidade"]):
+        await noticias(update, context)
+    else:
+        await send_response(
+            update,
+            "🤔 Não entendi. Você pode perguntar sobre:\n"
+            "- Próximos jogos\n- Últimos resultados\n"
+            "- Elenco\n- Notícias\n"
+            "Ou use o menu abaixo:",
+            menu_principal(),
+        )
+
+
+# ---- FUNÇÕES PRINCIPAIS ----
+async def send_response(update: Update, text: str, reply_markup=None):
+    """Envia resposta tratando tanto mensagens quanto callbacks de forma segura"""
+    try:
+        if update.callback_query:  # Verifica direto se existe o atributo
+            await update.callback_query.edit_message_text(
+                text=text, reply_markup=reply_markup, parse_mode="Markdown"
+            )
+        else:
+            await update.message.reply_text(
+                text=text, reply_markup=reply_markup, parse_mode="Markdown"
+            )
+    except AttributeError:
+        # Fallback seguro se a estrutura do update for inesperada
+        await update.message.reply_text(text, reply_markup=reply_markup)
+
+
 async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    is_callback = hasattr(update, "callback_query")
-    query = update.callback_query
     try:
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
@@ -108,16 +120,11 @@ async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
             By.XPATH, '//*[@id="matchesBox"]/div[3]/span'
         ).text
 
-        resposta = f"🔥 Próximo Jogo:\n{prox_jogo}"
-
-        if is_callback:
-            await query.edit_message_text(resposta, reply_markup=menu_principal())
-        else:
-            await update.message.reply_text(resposta, reply_markup=menu_principal())
+        await send_response(update, f"🔥 Próximo Jogo:\n{prox_jogo}", menu_principal())
 
     except Exception as e:
-        await query.edit_message_text(
-            f"❌ Erro: {str(e)}", reply_markup=menu_principal()
+        await send_response(
+            update, f"❌ Erro ao buscar jogos: {str(e)}", menu_principal()
         )
     finally:
         if "navegador" in locals():
@@ -125,41 +132,43 @@ async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def ultimos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
     try:
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
         navegador.get("https://www.hltv.org/team/8297/furia#tab-matchesBox")
-        sleep(1)
+        sleep(2)  # Espera carregar
 
-        # Extrai os últimos 3 jogos
         resultados = []
-        for i in range(1, 4):
-            data = navegador.find_element(
-                By.XPATH, f'//*[@id="matchesBox"]/table/tbody[1]/tr[{i}]/td[1]/span'
-            ).text
-            time1 = navegador.find_element(
-                By.XPATH, f'//*[@id="matchesBox"]/table/tbody[1]/tr[{i}]/td[2]/div[1]/a'
-            ).text
-            placar1 = navegador.find_element(
-                By.XPATH,
-                f'//*[@id="matchesBox"]/table/tbody[1]/tr[{i}]/td[2]/div[2]/span[1]',
-            ).text
-            time2 = navegador.find_element(
-                By.XPATH, f'//*[@id="matchesBox"]/table/tbody[1]/tr[{i}]/td[2]/div[3]/a'
-            ).text
-            placar2 = navegador.find_element(
-                By.XPATH,
-                f'//*[@id="matchesBox"]/table/tbody[1]/tr[{i}]/td[2]/div[2]/span[3]',
-            ).text
-            resultados.append(f"📅 {data} | {time1} {placar1}-{placar2} {time2}")
+        for i in range(1, 4):  # Pega os 3 últimos jogos
+            try:
+                # Extrai todos os dados de uma vez
+                jogo = navegador.find_element(
+                    By.XPATH, f'//*[@id="matchesBox"]/table/tbody[1]/tr[{i}]'
+                )
 
-        await query.edit_message_text(
-            "📊 Últimos Jogos:\n" + "\n".join(resultados), reply_markup=menu_principal()
+                data = jogo.find_element(By.XPATH, "./td[1]/span").text
+                time1 = jogo.find_element(By.XPATH, "./td[2]/div[1]/a").text
+                time2 = jogo.find_element(By.XPATH, "./td[2]/div[3]/a").text
+                placar = jogo.find_element(By.XPATH, "./td[2]/div[2]").text.replace(
+                    "\n", " "
+                )
+
+                resultados.append(f"📅 {data}: {time1} {placar} {time2}")
+            except Exception as e:
+                print(f"Erro ao extrair jogo {i}: {str(e)}")
+                continue
+
+        resposta = (
+            "📊 Últimos Jogos:\n" + "\n".join(resultados)
+            if resultados
+            else "❌ Nenhum resultado recente"
         )
+
+        await send_response(update, resposta, menu_principal())
+
     except Exception as e:
-        await query.edit_message_text(
-            f"❌ Erro: {str(e)}", reply_markup=menu_principal()
+        await send_response(
+            update, f"❌ Erro ao buscar resultados: {str(e)}", menu_principal()
         )
     finally:
         if "navegador" in locals():
@@ -168,11 +177,10 @@ async def ultimos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def elenco(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        query = update.callback_query
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
         navegador.get("https://www.hltv.org/team/8297/furia#tab-rosterBox")
-        sleep(2)  # Espera carregar
+        sleep(2)
 
         # Coach
         try:
@@ -180,7 +188,7 @@ async def elenco(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 By.XPATH,
                 '//*[@id="rosterBox"]/div[2]/table/tbody/tr/td[1]/a/div[2]/div',
             ).text
-        except NoSuchElementException:
+        except Exception:
             coach = "Não identificado"
 
         # Jogadores
@@ -192,112 +200,96 @@ async def elenco(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f'//*[@id="rosterBox"]/div[4]/table/tbody/tr[{i}]/td[1]/a/div[2]/div',
                 ).text
                 jogadores.append(jogador)
-            except NoSuchElementException:
+            except Exception:
                 continue
 
-        if jogadores:
-            resposta = (
-                f"👥 *Elenco da FURIA*\n"
-                f"🎮 *Coach:* {coach}\n"
-                f"🟡 *Jogadores:*\n- " + "\n- ".join(jogadores)
-            )
-        else:
-            resposta = "❌ Nenhum jogador encontrado."
+        resposta = (
+            f"👥 *Elenco da FURIA*\n"
+            f"🎮 *Coach:* {coach}\n"
+            f"🟡 *Jogadores:*\n- " + "\n- ".join(jogadores)
+            if jogadores
+            else "❌ Nenhum jogador encontrado."
+        )
 
-        await query.edit_message_text(resposta, reply_markup=menu_principal())
+        await send_response(update, resposta, menu_principal())
 
-    except WebDriverException as e:
-        await query.edit_message_text(f"❌ Erro no navegador: {str(e)}")
     except Exception as e:
-        await query.edit_message_text(f"❌ Erro inesperado: {str(e)}")
+        await send_response(
+            update, f"❌ Erro ao buscar elenco: {str(e)}", menu_principal()
+        )
     finally:
         if "navegador" in locals():
             navegador.quit()
 
 
 async def noticias(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
     try:
-        await query.edit_message_text(
-            "📡 Buscando notícias furiosas...", reply_markup=None
-        )  # Feedback inicial
+        # Feedback inicial
+        await send_response(
+            update, "📡 Buscando as últimas notícias furiosas...", reply_markup=None
+        )
 
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
         navegador.get("https://draft5.gg/equipe/330-FURIA")
-        sleep(5)
+        sleep(3)  # Espera carregar
 
-        # Extrai links E títulos (se disponíveis)
+        # Extração dos dados
         noticias = []
-        for i in range(3, 6):  # Adapte para os índices corretos
+        for i in range(3, 6):  # Ajuste conforme a estrutura do site
             try:
-                link_element = navegador.find_element(
+                elemento = navegador.find_element(
                     By.XPATH, f'//*[@id="AppContainer"]/div/div/div/div[2]/div[{i}]/a'
                 )
-                link = link_element.get_attribute("href")
-                titulo = link_element.text.strip()  # Título da notícia
-                noticias.append(
-                    f"• <a href='{link}'>{titulo}</a>"
-                    if titulo
-                    else f"• <a href='{link}'>Link da notícia</a>"
-                )
-            except Exception:
+                link = elemento.get_attribute("href")
+                titulo = elemento.text.strip()
+
+                # Formato MarkdownV2 (mais compatível)
+                noticias.append(f"• [{titulo}]({link})")
+            except Exception as e:
+                print(f"Erro ao extrair notícia {i}: {str(e)}")
                 continue
 
+        # Construção da resposta
         if noticias:
             resposta = (
-                "📰 <b>Últimas Notícias da FURIA:</b>\n\n"
-                + "\n".join(noticias)
-                + "\n\n🔍 Mais em: <a href='https://draft5.gg/equipe/330-FURIA'>Draft5</a>"
+                "📰 *Últimas Notícias da FURIA:*\n\n"
+                + "\n\n".join(noticias)
+                + "\n\n🔍 [Mais notícias no Draft5](https://draft5.gg/equipe/330-FURIA)"
             )
         else:
             resposta = "❌ Nenhuma notícia encontrada no momento."
 
-        await query.edit_message_text(
-            resposta,
+        # Envio com formatação correta
+        await send_response(
+            update,
+            text=resposta,
             reply_markup=menu_principal(),
-            parse_mode="HTML",  # Permite formatação HTML (links clicáveis)
-            disable_web_page_preview=False,
+            # parse_mode="Markdown",  # Parâmetro corrigido
         )
 
     except Exception as e:
-        await query.edit_message_text(
-            f"❌ Falha ao buscar notícias: {str(e)}", reply_markup=menu_principal()
+        error_msg = f"❌ Falha ao buscar notícias:\n`{str(e)}`"
+        await send_response(
+            update,
+            text=error_msg,
+            reply_markup=menu_principal(),
+            # parse_mode="Markdown",
         )
     finally:
         if "navegador" in locals():
             navegador.quit()
 
 
-# # Configuração do bot
-# if __name__ == "__main__":
-#     print("Bot rodando...")
-
-#     application = Application.builder().token(TOKEN).build()
-
-#     # Registra apenas o start e o handler de callbacks
-#     application.add_handler(CommandHandler("start", start))
-#     application.add_handler(CallbackQueryHandler(button_click))
-
-#     print("Buscando mensagens...")
-#     application.run_polling(poll_interval=3)
-
+# ---- INICIALIZAÇÃO ----
 if __name__ == "__main__":
-    print("Iniciando bot FURIOSO...")
-
-    # Carrega configurações
-    TOKEN = carregar_config() or os.getenv("TELEGRAM_TOKEN")
-    if not TOKEN:
-        raise ValueError("Token não encontrado!")
-
     application = Application.builder().token(TOKEN).build()
 
-    # Handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_click))
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
     )
 
-    print("Bot pronto para receber mensagens...")
+    print("Bot FURIOSO rodando...")
     application.run_polling()
