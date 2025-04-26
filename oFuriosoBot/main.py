@@ -1,5 +1,12 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    CallbackQueryHandler,
+    MessageHandler,
+    filters,
+)
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
 from selenium import webdriver
@@ -7,12 +14,54 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
+import os
+
+
+def carregar_config():
+    try:
+        with open("config.txt", "r") as f:
+            for linha in f:
+                if linha.startswith("TOKEN="):
+                    return linha.split("=")[1].strip()
+        return None
+    except FileNotFoundError:
+        return None
+
+
+TOKEN = carregar_config() or os.getenv(
+    "TELEGRAM_TOKEN"
+)  # Fallback para variável de ambiente
+
+if not TOKEN:
+    raise ValueError(
+        "Token não encontrado. Crie um arquivo config.txt com TOKEN=seu_token"
+    )
+
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    texto = update.message.text.lower()
+
+    if any(palavra in texto for palavra in ["próximo", "jogo", "partida"]):
+        await proximos_jogos(update, context)
+    elif any(palavra in texto for palavra in ["último", "resultado"]):
+        await ultimos_jogos(update, context)
+    elif any(palavra in texto for palavra in ["elenco", "jogador", "time"]):
+        await elenco(update, context)
+    elif any(palavra in texto for palavra in ["notícia", "novidade"]):
+        await noticias(update, context)
+    else:
+        await update.message.reply_text(
+            "🤔 Não entendi. Você pode perguntar sobre:\n"
+            "- Próximos jogos\n- Últimos resultados\n- Elenco\n- Notícias\n"
+            "Ou use o menu abaixo:",
+            reply_markup=menu_principal(),
+        )
 
 
 # servico = ChromeService(ChromeDriverManager().install())
 # navegador = webdriver.Chrome(service=servico)
 
-TOKEN = "7910113942:AAE09XPX5JHgaFFMGqhKTAYjYa68Wh9jfcE"
+# TOKEN = "7910113942:AAE09XPX5JHgaFFMGqhKTAYjYa68Wh9jfcE"
 
 
 # COMANDOS FURIOSOS
@@ -48,6 +97,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    is_callback = hasattr(update, "callback_query")
     query = update.callback_query
     try:
         servico = ChromeService(ChromeDriverManager().install())
@@ -57,9 +107,14 @@ async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
         prox_jogo = navegador.find_element(
             By.XPATH, '//*[@id="matchesBox"]/div[3]/span'
         ).text
-        await query.edit_message_text(
-            f"🔥 Próximo Jogo:\n{prox_jogo}", reply_markup=menu_principal()
-        )
+
+        resposta = f"🔥 Próximo Jogo:\n{prox_jogo}"
+
+        if is_callback:
+            await query.edit_message_text(resposta, reply_markup=menu_principal())
+        else:
+            await update.message.reply_text(resposta, reply_markup=menu_principal())
+
     except Exception as e:
         await query.edit_message_text(
             f"❌ Erro: {str(e)}", reply_markup=menu_principal()
@@ -202,7 +257,7 @@ async def noticias(update: Update, context: ContextTypes.DEFAULT_TYPE):
             resposta,
             reply_markup=menu_principal(),
             parse_mode="HTML",  # Permite formatação HTML (links clicáveis)
-            disable_web_page_preview=False,  # MOSTRA PREVIEW DOS LINKS (removemos a desativação)
+            disable_web_page_preview=False,
         )
 
     except Exception as e:
@@ -214,15 +269,35 @@ async def noticias(update: Update, context: ContextTypes.DEFAULT_TYPE):
             navegador.quit()
 
 
-# Configuração do bot
+# # Configuração do bot
+# if __name__ == "__main__":
+#     print("Bot rodando...")
+
+#     application = Application.builder().token(TOKEN).build()
+
+#     # Registra apenas o start e o handler de callbacks
+#     application.add_handler(CommandHandler("start", start))
+#     application.add_handler(CallbackQueryHandler(button_click))
+
+#     print("Buscando mensagens...")
+#     application.run_polling(poll_interval=3)
+
 if __name__ == "__main__":
-    print("Bot rodando...")
+    print("Iniciando bot FURIOSO...")
+
+    # Carrega configurações
+    TOKEN = carregar_config() or os.getenv("TELEGRAM_TOKEN")
+    if not TOKEN:
+        raise ValueError("Token não encontrado!")
 
     application = Application.builder().token(TOKEN).build()
 
-    # Registra apenas o start e o handler de callbacks
+    # Handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_click))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
 
-    print("Buscando mensagens...")
-    application.run_polling(poll_interval=3)
+    print("Bot pronto para receber mensagens...")
+    application.run_polling()
