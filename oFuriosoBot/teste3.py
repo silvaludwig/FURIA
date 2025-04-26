@@ -1,21 +1,16 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
-
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
+import os
+
+TOKEN = os.getenv("TOKEN_BOT") or "SEU_TOKEN_AQUI"
 
 
-# servico = ChromeService(ChromeDriverManager().install())
-# navegador = webdriver.Chrome(service=servico)
-
-TOKEN = "7910113942:AAE09XPX5JHgaFFMGqhKTAYjYa68Wh9jfcE"
-
-
-# COMANDOS FURIOSOS
+# ---- MENU PRINCIPAL ----
 def menu_principal():
     teclado = [
         [InlineKeyboardButton("Próximos Jogos", callback_data="proximos_jogos")],
@@ -26,10 +21,10 @@ def menu_principal():
     return InlineKeyboardMarkup(teclado)
 
 
+# ---- HANDLERS ----
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "E aí, suave? Sou o FURIOSO, bot da Fúria. \n" "O que manda pra hj?",
-        reply_markup=menu_principal(),
+        "🟡⚫ E aí, Furioso! Escolha uma opção:", reply_markup=menu_principal()
     )
 
 
@@ -47,6 +42,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await noticias(update, context)
 
 
+# ---- FUNÇÕES DOS MENUS ----
 async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     try:
@@ -111,118 +107,55 @@ async def ultimos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
             navegador.quit()
 
 
+# ... (Implemente similarmente as funções 'elenco' e 'noticias')
 async def elenco(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        query = update.callback_query
-        servico = ChromeService(ChromeDriverManager().install())
-        navegador = webdriver.Chrome(service=servico)
-        navegador.get("https://www.hltv.org/team/8297/furia#tab-rosterBox")
-        sleep(2)  # Espera carregar
-
-        # Coach
-        try:
-            coach = navegador.find_element(
-                By.XPATH,
-                '//*[@id="rosterBox"]/div[2]/table/tbody/tr/td[1]/a/div[2]/div',
-            ).text
-        except NoSuchElementException:
-            coach = "Não identificado"
-
-        # Jogadores
-        jogadores = []
-        for i in range(1, 6):
-            try:
-                jogador = navegador.find_element(
-                    By.XPATH,
-                    f'//*[@id="rosterBox"]/div[4]/table/tbody/tr[{i}]/td[1]/a/div[2]/div',
-                ).text
-                jogadores.append(jogador)
-            except NoSuchElementException:
-                continue
-
-        if jogadores:
-            resposta = (
-                f"👥 *Elenco da FURIA*\n"
-                f"🎮 *Coach:* {coach}\n"
-                f"🟡 *Jogadores:*\n- " + "\n- ".join(jogadores)
-            )
-        else:
-            resposta = "❌ Nenhum jogador encontrado."
-
-        await query.edit_message_text(resposta, reply_markup=menu_principal())
-
-    except WebDriverException as e:
-        await query.edit_message_text(f"❌ Erro no navegador: {str(e)}")
-    except Exception as e:
-        await query.edit_message_text(f"❌ Erro inesperado: {str(e)}")
-    finally:
-        if "navegador" in locals():
-            navegador.quit()
-
-
-async def noticias(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     try:
-        await query.edit_message_text(
-            "📡 Buscando notícias furiosas...", reply_markup=None
-        )  # Feedback inicial
-
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
-        navegador.get("https://draft5.gg/equipe/330-FURIA")
-        sleep(5)
-
-        # Extrai links E títulos (se disponíveis)
-        noticias = []
-        for i in range(3, 6):  # Adapte para os índices corretos
-            try:
-                link_element = navegador.find_element(
-                    By.XPATH, f'//*[@id="AppContainer"]/div/div/div/div[2]/div[{i}]/a'
-                )
-                link = link_element.get_attribute("href")
-                titulo = link_element.text.strip()  # Título da notícia
-                noticias.append(
-                    f"• <a href='{link}'>{titulo}</a>"
-                    if titulo
-                    else f"• <a href='{link}'>Link da notícia</a>"
-                )
-            except Exception:
-                continue
-
-        if noticias:
-            resposta = (
-                "📰 <b>Últimas Notícias da FURIA:</b>\n\n"
-                + "\n".join(noticias)
-                + "\n\n🔍 Mais em: <a href='https://draft5.gg/equipe/330-FURIA'>Draft5</a>"
-            )
-        else:
-            resposta = "❌ Nenhuma notícia encontrada no momento."
-
+        await update.message.reply_text("Acessando base de dados...")
+        sleep(1)
+        navegador.get("https://www.hltv.org/team/8297/furia#tab-rosterBox")
+        await update.message.reply_text("Listando players ativos...")
+        coach = navegador.find_element(
+            By.XPATH, '//*[@id="rosterBox"]/div[2]/table/tbody/tr/td[1]/a/div[2]/div'
+        ).get_attribute("innerText")
+        player1 = navegador.find_element(
+            By.XPATH, '//*[@id="rosterBox"]/div[4]/table/tbody/tr[1]/td[1]/a/div[2]/div'
+        ).get_attribute("innerText")
+        player2 = navegador.find_element(
+            By.XPATH, '//*[@id="rosterBox"]/div[4]/table/tbody/tr[2]/td[1]/a/div[2]/div'
+        ).get_attribute("innerText")
+        player3 = navegador.find_element(
+            By.XPATH, '//*[@id="rosterBox"]/div[4]/table/tbody/tr[3]/td[1]/a/div[2]/div'
+        ).get_attribute("innerText")
+        player4 = navegador.find_element(
+            By.XPATH, '//*[@id="rosterBox"]/div[4]/table/tbody/tr[4]/td[1]/a/div[2]/div'
+        ).get_attribute("innerText")
+        player5 = navegador.find_element(
+            By.XPATH, '//*[@id="rosterBox"]/div[4]/table/tbody/tr[5]/td[1]/a/div[2]/div'
+        ).get_attribute("innerText")
+        # ... seu código selenium ...
         await query.edit_message_text(
-            resposta,
-            reply_markup=menu_principal(),
-            parse_mode="HTML",  # Permite formatação HTML (links clicáveis)
-            disable_web_page_preview=False,  # MOSTRA PREVIEW DOS LINKS (removemos a desativação)
+            f"👥 Elenco:\nCoach: {coach}\nJogadores: {', '.join(jogadores)}",
+            reply_markup=menu_principal()
         )
-
     except Exception as e:
-        await query.edit_message_text(
-            f"❌ Falha ao buscar notícias: {str(e)}", reply_markup=menu_principal()
-        )
+        await query.edit_message_text(f"❌ Erro: {str(e)}", reply_markup=menu_principal())
     finally:
-        if "navegador" in locals():
+        if 'navegador' in locals():
             navegador.quit()
+            ,
 
 
-# Configuração do bot
+
+# ---- CONFIGURAÇÃO DO BOT ----
 if __name__ == "__main__":
-    print("Bot rodando...")
-
     application = Application.builder().token(TOKEN).build()
 
     # Registra apenas o start e o handler de callbacks
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button_click))
 
-    print("Buscando mensagens...")
-    application.run_polling(poll_interval=3)
+    print("Bot rodando com menus inline...")
+    application.run_polling()
