@@ -9,7 +9,46 @@ def teste_de_funcao():
     return "testando função de busca de próximo jogo"
 
 
-def proximo_jogo(): ...
+def ultimos_jogos():
+    try:
+        servico = ChromeService(ChromeDriverManager().install())
+        navegador = webdriver.Chrome(service=servico)
+        navegador.get("https://www.hltv.org/team/8297/furia#tab-matchesBox")
+        sleep(2)  # Espera carregar
+
+        resultados = []
+        for i in range(1, 4):  # Pega os 3 últimos jogos
+            try:
+                # Extrai todos os dados de uma vez
+                jogo = navegador.find_element(
+                    By.XPATH, f'//*[@id="matchesBox"]/table/tbody[1]/tr[{i}]'
+                )
+
+                data = jogo.find_element(By.XPATH, "./td[1]/span").text
+                time1 = jogo.find_element(By.XPATH, "./td[2]/div[1]/a").text
+                time2 = jogo.find_element(By.XPATH, "./td[2]/div[3]/a").text
+                placar = jogo.find_element(By.XPATH, "./td[2]/div[2]").text.replace(
+                    "\n", " "
+                )
+
+                resultados.append(f"📅 {data}:\n {time1} {placar} {time2}")
+            except Exception as e:
+                return f"Erro ao extrair jogo {i}: {str(e)}"
+                continue
+
+        resposta = (
+            "📊 Últimos Jogos:\n" + "\n".join(resultados)
+            if resultados
+            else "❌ Nenhum resultado recente"
+        )
+
+        return resposta.replace("\n", "<br>")
+
+    except Exception as e:
+        return f"❌ Erro ao buscar resultados: {str(e)}"
+    finally:
+        if "navegador" in locals():
+            navegador.quit()
 
 
 def status_ao_vivo(): ...
@@ -51,7 +90,7 @@ def elenco_furia():
             else "❌ Nenhum jogador encontrado."
         )
 
-        return resposta
+        return resposta.replace("\n", "<br>")
 
     except Exception as e:
         return f"❌ Erro ao buscar elenco: {str(e)}"
@@ -61,4 +100,20 @@ def elenco_furia():
             navegador.quit()
 
 
-def ultimos_resultados(): ...
+def proximos_jogos():
+    try:
+        servico = ChromeService(ChromeDriverManager().install())
+        navegador = webdriver.Chrome(service=servico)
+        navegador.get("https://www.hltv.org/team/8297/furia#tab-matchesBox")
+
+        prox_jogo = navegador.find_element(
+            By.XPATH, '//*[@id="matchesBox"]/div[3]/span'
+        ).text
+
+        return f"🔥 Próximo Jogo:\n{prox_jogo}"
+
+    except Exception as e:
+        return f"❌ Erro ao buscar jogos: {str(e)}"
+    finally:
+        if "navegador" in locals():
+            navegador.quit()

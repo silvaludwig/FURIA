@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import random
-from functions import teste_de_funcao, elenco_furia
+from functions import teste_de_funcao, elenco_furia, ultimos_jogos, proximos_jogos
 
 app = Flask(__name__)
 
@@ -49,13 +49,18 @@ def generate_bot_response(message):
         current_quiz_question = None
         return response
 
-    if "próximo jogo" in message or "proximo jogo" in message:
+    if (
+        "próximo jogo" in message
+        or "proximo jogo" in message
+        or "proximos jogos" in message
+        or "próximos jogos" in message
+    ):
         # return "aqui vai uma função que busca os próximos jogos"
-        return teste_de_funcao()
+        return proximos_jogos()
     elif "status" in message or "ao vivo" in message:
         return "aqui vai uma função que busca status em tempo real caso um jogo esteja acontecendo"
     elif "resultado" in message or "ultimos jogos" in message:
-        return "aqui vai uma função que busca os resultados dos últimos jogos"
+        return ultimos_jogos()
     elif "elenco" in message or "time da furia" in message:
         return elenco_furia()
     elif "quiz" in message:
