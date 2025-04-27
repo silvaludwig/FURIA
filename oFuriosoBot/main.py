@@ -112,6 +112,11 @@ async def send_response(update: Update, text: str, reply_markup=None):
 
 async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        # Feedback inicial
+        await send_response(
+            update, "📡 Checando o calendário da Furia...", reply_markup=None
+        )
+
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
         navegador.get("https://www.hltv.org/team/8297/furia#tab-matchesBox")
@@ -133,6 +138,11 @@ async def proximos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ultimos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        # Feedback inicial
+        await send_response(
+            update, "📡 Buscando as últimas partidas...", reply_markup=None
+        )
+
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
         navegador.get("https://www.hltv.org/team/8297/furia#tab-matchesBox")
@@ -177,6 +187,11 @@ async def ultimos_jogos(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def elenco(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        # Feedback inicial
+        await send_response(
+            update, "📡 Buscando o elenco furioso...", reply_markup=None
+        )
+
         servico = ChromeService(ChromeDriverManager().install())
         navegador = webdriver.Chrome(service=servico)
         navegador.get("https://www.hltv.org/team/8297/furia#tab-rosterBox")
