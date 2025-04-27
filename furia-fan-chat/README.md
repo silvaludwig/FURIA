@@ -1,48 +1,46 @@
-🖥️ Projeto: Web Chat Interativo para Fãs da FURIA Esports
-📋 Descrição
+# 🖥️ Projeto: Web Chat Interativo para Fãs da FURIA Esports
+### 📋 Descrição
 Este projeto é um web chat desenvolvido para fãs do time de CS:GO da FURIA Esports.
 Ele permite que usuários interajam com o bot para receber:
 
-Últimos resultados de jogos
+- Últimos resultados de jogos
 
-Próximos confrontos
+- Próximos confrontos
 
-Elenco atual do time
+- Elenco atual do time
 
-Quiz divertido sobre a FURIA
+- Quiz divertido sobre a FURIA
 
-🚀 Funcionalidades
-Mensagem de boas-vindas automática
+### 🚀 Funcionalidades
+- Mensagem de boas-vindas automática
 
-Consulta aos 3 últimos jogos
+- Consulta aos 3 últimos jogos
 
-Informação do próximo jogo
+- Informação do próximo jogo
 
-Lista atualizada do elenco (coach e jogadores)
+- Lista atualizada do elenco (coach e jogadores)
 
-Quiz interativo com pontuação
+- Quiz interativo com pontuação
 
-Fundo personalizado com a logo da FURIA
+- Fundo personalizado com a logo da FURIA
 
-Atualização em tempo real via scraping (HLTV.org)
+- Atualização em tempo real via scraping (HLTV.org)
 
-⚙️ Tecnologias Utilizadas
-Python 3.11
+### ⚙️ Tecnologias Utilizadas
+- Python 3.11
 
-Flask - Backend Web
+- Flask - Backend Web
 
-Selenium WebDriver - Web scraping
+- Selenium WebDriver - Web scraping
 
-WebDriver Manager - Gerenciador do driver Chrome
+- WebDriver Manager - Gerenciador do driver Chrome
 
-HTML/CSS/JavaScript - Frontend
+- HTML/CSS/JavaScript - Frontend
 
-HLTV.org - Fonte de dados
+- HLTV.org - Fonte de dados
 
-🛠️ Estrutura do Projeto
-bash
-Copiar
-Editar
+# 🛠️ Estrutura do Projeto
+```bash
 /projeto-furia-chat
 │
 ├── app.py # Servidor Flask com rotas e lógica do quiz
@@ -58,82 +56,83 @@ Editar
 └── /static
 ├── style.css # Estilo da página
 └── furia-logo.png # Logo da FURIA usada no background
-🔥 Instalação e Execução
+```
+
+---
+
+# 🔥 Instalação e Execução
 
 1. Clone o repositório
-   bash
-   Copiar
-   Editar
+   ```bash
    git clone https://github.com/seuusuario/projeto-furia-chat.git
    cd projeto-furia-chat
+   ```
 2. Crie um ambiente virtual
-   bash
-   Copiar
-   Editar
+   ```bash
    python -m venv venv
+   ```
+   
    Ative o ambiente:
 
 No Linux/Mac:
 
-bash
-Copiar
-Editar
+```bash
 source venv/bin/activate
+```
+
 No Windows:
 
-bash
-Copiar
-Editar
+```bash
 venv\Scripts\activate 3. Instale as dependências
-bash
-Copiar
-Editar
+```
+
+```bash
 pip install -r requirements.txt 4. Execute o servidor Flask
-bash
-Copiar
-Editar
+```
+
+```bash
 flask run
+```
+
 Acesse no navegador:
 
-cpp
-Copiar
-Editar
+```cpp
 http://127.0.0.1:5000
+```
+
 Alternativa rápida
 Execute diretamente o script de inicialização:
 
 Linux/Mac:
 
-bash
-Copiar
-Editar
+```bash
 ./start.sh
+```
+
 Windows:
 
-bash
-Copiar
-Editar
+```bash
 start.bat
-📈 Como Usar
+```
+
+# 📈 Como Usar
 No chat, envie:
 
-"últimos jogos" → para receber os 3 resultados mais recentes
+- "últimos jogos" → para receber os 3 resultados mais recentes
 
-"próximo jogo" → para saber o próximo confronto
+- "próximo jogo" → para saber o próximo confronto
 
-"elenco" → para ver coach e jogadores
+- "elenco" → para ver coach e jogadores
 
-"quiz" → para iniciar um quiz de perguntas aleatórias sobre a FURIA
+- "quiz" → para iniciar um quiz de perguntas aleatórias sobre a FURIA
 
-🛡️ Observações
-Requisitos: Você precisa ter o navegador Google Chrome instalado no computador.
+# 🛡️ Observações
+- Requisitos: Você precisa ter o navegador Google Chrome instalado no computador.
 
-Sobre Web Scraping: O sistema depende da estrutura atual do site HLTV.org. Se o site mudar, o scraping pode precisar ser ajustado.
+- Sobre Web Scraping: O sistema depende da estrutura atual do site HLTV.org. Se o site mudar, o scraping pode precisar ser ajustado.
 
-📈 Diagrama de Arquitetura Simplificado
-scss
-Copiar
-Editar
+# 📈 Diagrama de Arquitetura Simplificado
+```scss
 Usuário → Navegador (HTML/JS/CSS)
 ↓
 Flask (app.py)
@@ -143,11 +142,13 @@ Funções (functions.py)
 Scraping (Selenium)
 ↓
 Retorno → Chat do Usuário
-👨‍💻 Desenvolvedor
-Nome: [Seu Nome Aqui]
+```
 
-GitHub: [Seu GitHub Aqui]
+# 👨‍💻 Desenvolvedor
+Nome: Ludwig
 
-LinkedIn: [Seu LinkedIn Aqui]
+GitHub: github.com/silvaludwig
 
-🚀 FURIA HYPE MODE ON!
+LinkedIn: linkedin.com/silvaludwig
+
+# 🚀 FURIA HYPE MODE ON!
