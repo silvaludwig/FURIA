@@ -1,0 +1,41 @@
+body {
+    font-family: Arial, sans-serif;
+    background: url('/static/furia-logo.png') no-repeat left center fixed;
+    background-size: 35%;
+    background-color: #ffcc00; /* Cor de fundo caso a imagem não carregue */
+    color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.chat-container {
+    width: 300px;
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#chat-box {
+    height: 300px;
+    overflow-y: auto;
+    background: #333;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#user-input {
+    width: 70%;
+    padding: 10px;
+}
+
+button {
+    width: 25%;
+    padding: 10px;
+    background: #ffcc00;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
